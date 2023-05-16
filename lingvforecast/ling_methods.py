@@ -51,9 +51,9 @@ class TopForecast:
         # insert new item at place where old item corrcoef less then new item corrcoef
         else:
             # first - get minimum corr coef in sequence
-            min_coef = values[0].corrcoef
+            min_coef = self._crude_forecast[0].corrcoef
             index = 0
-            for i, val in enumerate(values):
+            for i, val in enumerate(self._crude_forecast):
                 if val.corrcoef < min_coef:
                     min_coef = val.corrcoef
                     index = i
