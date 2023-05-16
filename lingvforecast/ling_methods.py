@@ -18,19 +18,13 @@ CrudeForecast = namedtuple(
 class TopForecast:
 
     def __init__(self, top):
-        self._crude_forecast = [None for _ in range(top)]
+        self._top = top
+        self._crude_forecast = []
 
     def append(self, el: CrudeForecast):
         assert isinstance(
             el, CrudeForecast), 'el - object of CrudeForecast class!'
         self._add_top_corr(self._crude_forecast, el)
-
-    def get_result(self):
-        res = []
-        for val in self._crude_forecast:
-            if not val is None:
-                res.append(val)
-        return res
 
     def __str__(self) -> str:
         return str(self._crude_forecast)
@@ -39,36 +33,33 @@ class TopForecast:
         return str(self._crude_forecast)
 
     def __iter__(self):
-        return iter(self.get_result())
+        return iter(self._crude_forecast)
 
-    @staticmethod
-    def _add_top_corr(values, new_val):
+    def sort(self, reverse=False, key=None):
+        self._crude_forecast.sort(reverse=reverse, key=key)
+
+    def _add_top_corr(self, values, new_val):
         '''
 
         values - array type content 'Forecast' and 'None' objects.
         new_val - object of 'Forecast' class
         '''
-        # if array content empty place
-        # just insert in empty place
-        for i, val in enumerate(values):
-            if val is None:
-                values[i] = new_val
-                return values
-
-        # if array dont content empty place (None objects)
+        # if array content empty place just append
+        if len(self._crude_forecast) < self._top:
+            self._crude_forecast.append(new_val)
+        # if array dont content empty place
         # insert new item at place where old item corrcoef less then new item corrcoef
-        min_coef = values[0].corrcoef
-        index = 0
-        for i, val in enumerate(values):
-            if val.corrcoef < min_coef:
-                min_coef = val.corrcoef
-                index = i
-
-        if min_coef < new_val.corrcoef:
-            values[index] = new_val
-
-        # without any difference
-        return values
+        else:
+            # first - get minimum corr coef in sequence
+            min_coef = values[0].corrcoef
+            index = 0
+            for i, val in enumerate(values):
+                if val.corrcoef < min_coef:
+                    min_coef = val.corrcoef
+                    index = i
+            # second - try to change element with minimum corrcoef
+            if min_coef < new_val.corrcoef:
+                self._crude_forecast[index] = new_val
 
 
 # forecast
