@@ -3,7 +3,7 @@
 '''
 import pandas as pd
 import numpy as np
-from .ling_methods import ling_method, find_all_rows, CrudeForecast, TopForecast
+from .ling_methods import row_corr, ling_method, find_all_rows, CrudeForecast, TopForecast
 from typing import Sequence
 
 
@@ -29,11 +29,46 @@ class LingvForecast:
         self._top = top
         self._corrcoef = corrcoef
 
-    def predict(self, prow: Sequence, horizon: int = 1):
+    def _group_curves_by_correlation(self, curves, threshold=0.95):
+        groups = []
+        for i, curve in enumerate(curves):
+            if i == 0:
+                groups.append([curve])
+                continue
+            added_to_group = False
+            for group in groups:
+                if any(row_corr(curve, c) >= threshold for c in group):
+                    group.append(curve)
+                    added_to_group = True
+                    break
+            if not added_to_group:
+                groups.append([curve])
+        return groups
+
+    def _calculate_result_forecast(self, candidates: Sequence[CrudeForecast]) -> Sequence:
+        '''
+
+        '''
+        if len(candidates) < 2:
+            return candidates
+
+        # сделать кластеризацию по коэффициенту корреляции
+        groups = self._group_curves_by_correlation(candidates)
+
+        # пройтись по всем подмножествам, выбрать то, у которого больше мощность
+        group_length = [len(g) for g in groups]
+
+        # candidate_group = groups[group_length.index(max))]
+        # пройтись по выбранному подмножеству, вернуть прогноз с наибольшим
+        # коэффициентом корреляции с прогнозируемой кривой
+
+    def predict(self, prow: Sequence, horizon: int = 1) -> Sequence:
         '''
 
         :return array of arrays
         '''
+        assert horizon >= 1
+
         if self._method == 'top':
             # TopForecast contains CrudeForecast array
             top_correlation_rows = TopForecast(self._top)
@@ -45,16 +80,16 @@ class LingvForecast:
         for el in find_all_rows(prow, self._data, corrcoef=self._corrcoef, horizon=horizon):
             top_correlation_rows.append(el)
 
-        print('--- logs ---', top_correlation_rows)
+        # sort curves. At the beginning there will be elements with the maximum correlation coefficient.
+        top_correlation_rows.sort(reverse=True, key=lambda el: el.corrcoef)
 
-        # sort values. At the beginning there will be elements with the maximum correlation coefficient
-        # when calculating the correlation, the last element is removed, because it is an expert value
-        # sort_refine_forecast = sorted(
-        #     refine_forecast.get_result(), reverse=True, key=lambda val: row_corr(val.corrdata[:-1], corr_row))
-
-        # --- second step - calculate forecast
-        forecast = []
+        # --- second step - calculate candidates
+        candidates = []
         for cr in top_correlation_rows:
-            forecast.append(ling_method(prow, cr.fulldata))
+            candidates.append(ling_method(prow, cr.fulldata))
 
-        return forecast
+        # list with
+        self.candidates = candidates
+
+        # return self._calculate_result_forecast(candidates)
+        return candidates
