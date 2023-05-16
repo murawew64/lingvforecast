@@ -24,7 +24,7 @@ class TopForecast:
     def append(self, el: CrudeForecast):
         assert isinstance(
             el, CrudeForecast), 'el - object of CrudeForecast class!'
-        self._add_top_corr(self._crude_forecast, el)
+        self._add_top_corr(el)
 
     def __str__(self) -> str:
         return str(self._crude_forecast)
@@ -38,7 +38,7 @@ class TopForecast:
     def sort(self, reverse=False, key=None):
         self._crude_forecast.sort(reverse=reverse, key=key)
 
-    def _add_top_corr(self, values, new_val):
+    def _add_top_corr(self, new_val):
         '''
 
         values - array type content 'Forecast' and 'None' objects.
