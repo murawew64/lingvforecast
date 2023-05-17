@@ -28,6 +28,7 @@ class LingvForecast:
         self._method = method
         self._top = top
         self._corrcoef = corrcoef
+        self._candidates = []
 
     def _group_curves_by_correlation(self, curves, threshold=0.95):
         groups = []
@@ -47,7 +48,7 @@ class LingvForecast:
 
     def _calculate_result_forecast(self, candidates: Sequence[CrudeForecast]) -> Sequence:
         '''
-
+        candidates - отсортированы по коэффициенту подобия от большего к меньшему.
         '''
         if len(candidates) < 2:
             return candidates
@@ -57,10 +58,18 @@ class LingvForecast:
 
         # пройтись по всем подмножествам, выбрать то, у которого больше мощность
         group_length = [len(g) for g in groups]
+        max_power_index = group_length.index(max(group_length))
+        max_power_group = groups[max_power_index]
 
-        # candidate_group = groups[group_length.index(max))]
-        # пройтись по выбранному подмножеству, вернуть прогноз с наибольшим
-        # коэффициентом корреляции с прогнозируемой кривой
+        print(f'------ Max power = {max(group_length)} -----')
+
+        # у первого элемента наибольший коэффициент корреляции
+        # с прогнозируемой кривой, так как при разбиении на группы
+        # упорядоченность сохраняется
+        return max_power_group[0]
+
+    def get_candidates(self):
+        return self._candidates
 
     def predict(self, prow: Sequence, horizon: int = 1) -> Sequence:
         '''
@@ -88,8 +97,7 @@ class LingvForecast:
         for cr in top_correlation_rows:
             candidates.append(ling_method(prow, cr.fulldata))
 
-        # list with
-        self.candidates = candidates
+        # list with candidates
+        self._candidates = candidates
 
-        # return self._calculate_result_forecast(candidates)
-        return candidates
+        return self._calculate_result_forecast(candidates)
